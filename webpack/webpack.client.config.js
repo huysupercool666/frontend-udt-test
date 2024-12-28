@@ -16,7 +16,7 @@ module.exports = (env) => {
           use: {
             loader: 'babel-loader'
           }
-        },
+        }
       ]
     },
     resolve: {

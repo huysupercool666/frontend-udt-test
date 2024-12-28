@@ -19,7 +19,11 @@ module.exports = (env) => {
           use: {
             loader: 'babel-loader'
           }
+<<<<<<< HEAD
+        }
+=======
         },
+>>>>>>> origin/master
       ]
     },
     resolve: {
