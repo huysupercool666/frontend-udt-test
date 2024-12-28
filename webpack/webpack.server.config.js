@@ -19,11 +19,15 @@ module.exports = (env) => {
           use: {
             loader: 'babel-loader'
           }
-<<<<<<< HEAD
-        }
-=======
         },
->>>>>>> origin/master
+        {
+          test: /\.scss$/,
+          use: ['css-loader', 'sass-loader']
+        },
+        {
+          test: /\.css$/,
+          use: ['style-loader', 'css-loader']
+        }
       ]
     },
     resolve: {
