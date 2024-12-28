@@ -1,4 +1,5 @@
 const path = require('path')
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 module.exports = (env) => {
   const isProduction = env.production === true
   return {
@@ -16,9 +17,22 @@ module.exports = (env) => {
           use: {
             loader: 'babel-loader'
           }
+        },
+        {
+          test: /\.scss$/,
+          use: ['css-loader', 'sass-loader']
+        },
+        {
+          test: /\.css$/,
+          use: ['style-loader', 'css-loader']
         }
       ]
     },
+    plugins: [
+      new MiniCssExtractPlugin({
+        filename: 'app.css'
+      })
+    ],
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx']
     }
