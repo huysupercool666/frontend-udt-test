@@ -1,7 +1,6 @@
 import { Route, Routes } from 'react-router-dom'
 import React, { useState } from 'react'
 
-const buttons = ['AC', '+/-', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', ',', '=']
 const App: React.FC = () => {
   const [input, setInput] = useState<string>('')
   const handleButtonClick = (value: string) => {
@@ -10,6 +9,7 @@ const App: React.FC = () => {
   const handleClear = () => {
     setInput('')
   }
+  const buttons = ['AC', '+/-', '%', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', ',', '=']
   const renderButton = (button: string, index: number) => {
     if (button === 'AC') {
       return (
@@ -35,6 +35,16 @@ const App: React.FC = () => {
           key={button}
           onClick={() => handleButtonClick(button)}
           className={`${button === '0' ? 'double-width' : ''}`}
+        >
+          {button}
+        </button>
+      )
+    } else {
+      return (
+        <button
+          key={button}
+          onClick={() => handleButtonClick(button)}
+          className={`${button === '0' ? 'double-width' : ''} ${index >= 16 ? 'orange-row' : ''}`}
         >
           {button}
         </button>
