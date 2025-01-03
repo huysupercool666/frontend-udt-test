@@ -23,17 +23,41 @@ body {
         grid-column: span 4;
         font-size: 65px;
         text-align: right;
+        font-weight: 400;
         padding-right: 20px;
         background-color: #5a5050;
         color: white;
         height: 130px;
-        font-family: 'time new roman';
-      }
+        font-family: 'Times New Roman';
 
+        &.display-small {
+          font-size: 60px;
+        }
+
+        &.display-smaller {
+          font-size: 55px;
+        }
+
+        &.display-tiny {
+          font-size: 53px;
+        }
+
+        &.display-minimal {
+          font-size: 50px;
+        }
+
+        &.display-min {
+          font-size: 47px;
+        }
+
+        &.display-miner {
+          font-size: 42px;
+        }
+      }
       button {
         height: 98px;
         font-size: 40px;
-        font-weight: 100px;
+        font-weight: 400;
         border: none;
         cursor: pointer;
         background-color: #827d7d;
@@ -41,25 +65,17 @@ body {
         transition: background-color 0.3s;
         padding: 0;
         font-family: 'inter';
+
+        &.operator-button {
+          background-color: orange;
+        }
+        &.special-button {
+          background-color: #5a5050;
+        }
       }
     }
   }
 }
 .double-width {
   grid-column: span 2;
-}
-
-.plus-minus {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5em;
-}
-
-.plus {
-  margin-right: 0.1em;
-}
-
-.minus {
-  margin-left: 0.1em;
 }
