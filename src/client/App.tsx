@@ -1,27 +1,24 @@
-import React, { useReducer } from 'react'
+import React, { useReducer, useState } from 'react'
 
-// Định nghĩa các hành động
 type Action = { type: 'SET_INPUT'; value: string } | { type: 'CLEAR' }
 
-// Định nghĩa trạng thái
 interface State {
   input: string
   inputClassName: string
 }
 
-// Trạng thái khởi tạo
 const initialState: State = {
-  input: '',
+  input: '0',
   inputClassName: 'display'
 }
 
-// Reducer
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_INPUT': {
       let currentValue = action.value.replace(/,/g, '')
-      if (currentValue.length > 16) return state
-
+      if (currentValue.length > 16) {
+        return state
+      }
       const lengthToClassName: Record<number, string> = {
         11: 'display display-small',
         12: 'display display-smaller',
@@ -31,13 +28,13 @@ function reducer(state: State, action: Action): State {
         16: 'display display-miner'
       }
 
-      const newClassName = lengthToClassName[currentValue.length] || 'display'
+      const newInputClassName = lengthToClassName[currentValue.length] || 'display'
       const formattedInput = currentValue.replace(/(\d{3})(?=\d)/g, '$1,')
 
-      return { ...state, input: formattedInput, inputClassName: newClassName }
+      return { ...state, input: formattedInput, inputClassName: newInputClassName }
     }
     case 'CLEAR':
-      return { ...state, input: '', inputClassName: 'display' }
+      return { ...state, input: '0', inputClassName: 'display' }
     default:
       return state
   }
@@ -45,6 +42,9 @@ function reducer(state: State, action: Action): State {
 
 const App: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState)
+  const [prevValue, setPrevValue] = useState<number>(0)
+  const [operator, setOperator] = useState<string>('')
+  const [nextValue, setNextValue] = useState<number>(0)
 
   const buttonValues = [
     'AC',
@@ -69,11 +69,46 @@ const App: React.FC = () => {
   ]
 
   function handleDisplay(value: string) {
-    dispatch({ type: 'SET_INPUT', value: state.input + value })
+    if (['+', '-', '×', '÷'].includes(value)) {
+      if (prevValue !== null && operator) {
+        const result = handleOperatorButton(operator, prevValue, parseFloat(state.input))
+        dispatch({ type: 'SET_INPUT', value: result.toString() })
+      }
+      setPrevValue(parseFloat(state.input))
+      setOperator(value)
+    } else {
+      const newValue = state.input === '0' ? value : state.input + value
+      dispatch({ type: 'SET_INPUT', value: newValue })
+    }
   }
 
-  function handleClear() {
-    dispatch({ type: 'CLEAR' })
+  function handleSpecialButton(value: string) {
+    if (value === 'AC') {
+      dispatch({ type: 'CLEAR' })
+    } else if (value === '+/-') {
+      dispatch({ type: 'SET_INPUT', value: (parseFloat(state.input) * -1).toString() })
+    } else if (value === '%') {
+      dispatch({ type: 'SET_INPUT', value: (parseFloat(state.input) / 100).toString() })
+    } else if (value === ',') {
+      dispatch({ type: 'SET_INPUT', value: state.input + ',' })
+    }
+  }
+
+  function handleOperatorButton(value: string, prevValue: number, nextValue: number) {
+    switch (value) {
+      case '÷':
+        return prevValue / nextValue
+      case '×':
+        return prevValue * nextValue
+      case '+':
+        return prevValue + nextValue
+      case '-':
+        return prevValue - nextValue
+      case '=':
+        return nextValue
+      default:
+        return prevValue
+    }
   }
 
   function renderButton(button: string, index: number) {
@@ -84,7 +119,15 @@ const App: React.FC = () => {
     return (
       <button
         key={index}
-        onClick={() => (button === 'AC' ? handleClear() : handleDisplay(button))}
+        onClick={() => {
+          if (isSpecial) {
+            handleSpecialButton(button)
+          } else if (isOperator) {
+            handleDisplay(button)
+          } else {
+            handleDisplay(button)
+          }
+        }}
         className={`${button === '0' ? 'double-width' : ''} ${buttonClassName}`}
       >
         {button}
