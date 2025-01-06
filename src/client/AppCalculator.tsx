@@ -1,6 +1,8 @@
 import React, { useReducer, useState } from 'react'
 
-type Action = { type: 'SET_INPUT'; value: string } | { type: 'CLEAR' }
+type Action =
+  | { type: 'SET_INPUT'; value: string }
+  | { type: 'CLEAR' }
 
 interface State {
   input: string
@@ -43,8 +45,8 @@ function reducer(state: State, action: Action): State {
 const App: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState)
   const [prevValue, setPrevValue] = useState<number>(0)
-  const [operator, setOperator] = useState<string>('')
   const [nextValue, setNextValue] = useState<number>(0)
+  const [operator, setOperator] = useState<string>('')
 
   const buttonValues = [
     'AC',
@@ -68,20 +70,6 @@ const App: React.FC = () => {
     '='
   ]
 
-  function handleDisplay(value: string) {
-    if (['+', '-', '×', '÷'].includes(value)) {
-      if (prevValue !== null && operator) {
-        const result = handleOperatorButton(operator, prevValue, parseFloat(state.input))
-        dispatch({ type: 'SET_INPUT', value: result.toString() })
-      }
-      setPrevValue(parseFloat(state.input))
-      setOperator(value)
-    } else {
-      const newValue = state.input === '0' ? value : state.input + value
-      dispatch({ type: 'SET_INPUT', value: newValue })
-    }
-  }
-
   function handleSpecialButton(value: string) {
     if (value === 'AC') {
       dispatch({ type: 'CLEAR' })
@@ -90,12 +78,12 @@ const App: React.FC = () => {
     } else if (value === '%') {
       dispatch({ type: 'SET_INPUT', value: (parseFloat(state.input) / 100).toString() })
     } else if (value === ',') {
-      dispatch({ type: 'SET_INPUT', value: state.input + ',' })
+      dispatch({ type: 'SET_INPUT', value: (state.input + '.').toString() })
     }
   }
 
-  function handleOperatorButton(value: string, prevValue: number, nextValue: number) {
-    switch (value) {
+  function handleOperatorButton(operator: string, prevValue: number, nextValue: number) {
+    switch (operator) {
       case '÷':
         return prevValue / nextValue
       case '×':
@@ -104,10 +92,22 @@ const App: React.FC = () => {
         return prevValue + nextValue
       case '-':
         return prevValue - nextValue
-      case '=':
-        return nextValue
       default:
-        return prevValue
+        return nextValue
+    }
+  }
+
+  function handleDisplay(value: string) {
+    if (['+', '-', '×', '÷'].includes(value)) {
+      setOperator(value)
+      setPrevValue(parseFloat(state.input))
+      dispatch({ type: 'SET_INPUT', value: '0' })
+    } else if (value === '=' && operator && prevValue !== null) {
+        const result = handleOperatorButton(operator, prevValue, parseFloat(state.input))
+        dispatch({ type: 'SET_INPUT', value: result.toString() })
+    } else {
+      const newValue = state.input === '0' ? value : state.input + value
+      dispatch({ type: 'SET_INPUT', value: newValue })
     }
   }
 

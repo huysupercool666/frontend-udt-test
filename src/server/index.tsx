@@ -1,7 +1,7 @@
 import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import App from '../client/App'
+import App from '../client/AppCalculator'
 
 const server = express()
 const Port = 3000

@@ -65,9 +65,16 @@ body {
         transition: background-color 0.3s;
         padding: 0;
         font-family: 'inter';
-
         &.operator-button {
           background-color: orange;
+          &:focus {
+            background-color: white;
+            color: orange;
+          } 
+          &:active {
+            background-color: white;
+            color: orange;
+          }
         }
         &.special-button {
           background-color: #6e6363;
