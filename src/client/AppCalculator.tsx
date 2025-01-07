@@ -1,8 +1,6 @@
 import React, { useReducer, useState } from 'react'
 
-type Action =
-  | { type: 'SET_INPUT'; value: string }
-  | { type: 'CLEAR' }
+type Action = { type: 'SET_INPUT'; value: string } | { type: 'CLEAR' }
 
 interface State {
   input: string
@@ -14,11 +12,20 @@ const initialState: State = {
   inputClassName: 'display'
 }
 
+function formatInput(input: string): string {
+  if (input.includes('.')) {
+    const decimalParts = input.split('.')
+    return decimalParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + decimalParts[1]
+  } else {
+    return input.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  }
+}
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_INPUT': {
       let currentValue = action.value.replace(/,/g, '')
-      if (currentValue.length > 16) {
+      if (currentValue.length === 16) {
         return state
       }
       const lengthToClassName: Record<number, string> = {
@@ -31,8 +38,7 @@ function reducer(state: State, action: Action): State {
       }
 
       const newInputClassName = lengthToClassName[currentValue.length] || 'display'
-      const formattedInput = currentValue.replace(/(\d{3})(?=\d)/g, '$1,')
-
+      const formattedInput = formatInput(currentValue)
       return { ...state, input: formattedInput, inputClassName: newInputClassName }
     }
     case 'CLEAR':
@@ -47,7 +53,7 @@ const App: React.FC = () => {
   const [prevValue, setPrevValue] = useState<number>(0)
   const [nextValue, setNextValue] = useState<number>(0)
   const [operator, setOperator] = useState<string>('')
-
+  const [lastOperation, setLastOperation] = useState<boolean>(false)
   const buttonValues = [
     'AC',
     '+/-',
@@ -70,44 +76,95 @@ const App: React.FC = () => {
     '='
   ]
 
+  function checkDecimalToLong(value: number) {
+    const parts = value.toString().split('.')
+    if (parts[1] && parts[1].length > 10) {
+      return value.toExponential(0)
+    } else if (Math.abs(value) < 1e-10 || Math.abs(value) > 1e10) {
+      return value.toExponential(1)
+    }
+    return value.toString()
+  }
+
   function handleSpecialButton(value: string) {
     if (value === 'AC') {
       dispatch({ type: 'CLEAR' })
     } else if (value === '+/-') {
-      dispatch({ type: 'SET_INPUT', value: (parseFloat(state.input) * -1).toString() })
+      const newValue = parseFloat(state.input.replace(/,/g, '')) * -1
+      dispatch({ type: 'SET_INPUT', value: newValue.toString() })
     } else if (value === '%') {
-      dispatch({ type: 'SET_INPUT', value: (parseFloat(state.input) / 100).toString() })
+      const newValue = parseFloat(state.input.replace(/,/g, '')) / 100
+      dispatch({ type: 'SET_INPUT', value: checkDecimalToLong(newValue).toString() })
     } else if (value === ',') {
-      dispatch({ type: 'SET_INPUT', value: (state.input + '.').toString() })
+      if (!state.input.includes('.')) {
+        const currentValue = state.input.replace(/,/g, '')
+        dispatch({ type: 'SET_INPUT', value: currentValue + '.' })
+      }
     }
   }
 
   function handleOperatorButton(operator: string, prevValue: number, nextValue: number) {
+    let result: number
     switch (operator) {
       case '÷':
-        return prevValue / nextValue
+        if (nextValue === 0) {
+          return 'Cannot divide by zero'
+        }
+        result = prevValue / nextValue
+        break
       case '×':
-        return prevValue * nextValue
+        result = prevValue * nextValue
+        break
       case '+':
-        return prevValue + nextValue
+        result = prevValue + nextValue
+        break
       case '-':
-        return prevValue - nextValue
+        result = prevValue - nextValue
+        break
       default:
-        return nextValue
+        result = nextValue
     }
+    return checkDecimalToLong(result)
   }
 
   function handleDisplay(value: string) {
-    if (['+', '-', '×', '÷'].includes(value)) {
+    const operators = ['+', '-', '×', '÷']
+    const currentValue = parseFloat(state.input.replace(/,/g, ''))
+    const currentInput = state.input.replace(/,/g, '')
+    dispatch({ type: 'SET_INPUT', value: currentInput + value })
+
+    if (lastOperation) {
+      dispatch({ type: 'SET_INPUT', value: value })
+      setLastOperation(false)
+      return
+    }
+
+    if (state.input === '0') {
+      dispatch({ type: 'SET_INPUT', value: value })
+      return
+    }
+    
+    if (operators.includes(value)) {
       setOperator(value)
-      setPrevValue(parseFloat(state.input))
+      setPrevValue(currentValue)
+      setNextValue(currentValue)
       dispatch({ type: 'SET_INPUT', value: '0' })
-    } else if (value === '=' && operator && prevValue !== null) {
-        const result = handleOperatorButton(operator, prevValue, parseFloat(state.input))
-        dispatch({ type: 'SET_INPUT', value: result.toString() })
-    } else {
-      const newValue = state.input === '0' ? value : state.input + value
-      dispatch({ type: 'SET_INPUT', value: newValue })
+      setLastOperation(false)
+      return
+    }
+  
+    if (value === '=' && operator) {
+      const result = lastOperation
+        ? handleOperatorButton(operator, currentValue, nextValue)
+        : handleOperatorButton(operator, prevValue, currentValue)
+      
+      if (!lastOperation) {
+        setNextValue(currentValue)
+      }
+      
+      dispatch({ type: 'SET_INPUT', value: result.toString() })
+      setLastOperation(true)
+      return
     }
   }
 

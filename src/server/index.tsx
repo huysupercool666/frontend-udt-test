@@ -1,15 +1,16 @@
 import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import App from '../client/AppCalculator'
+import AppCalculator from '../client/AppCalculator'
+import { Server } from 'http'
 
 const server = express()
-const Port = 3000
+const port = 3001
 server.use(express.static('dist'))
 
-server.get('/', (req, res) => {
-  const appString = renderToString(<App />)
-  res.send(`
+server.get('/', (request, response) => {
+  const calculatorHtmlString = renderToString(<AppCalculator />)
+  response.send(`
     <!DOCTYPE html>
     <html>
       <head>
@@ -17,13 +18,13 @@ server.get('/', (req, res) => {
         <link rel="stylesheet" href="app.css">
       </head>
       <body>
-        <div id="root">${appString}</div>
+        <div id="root">${calculatorHtmlString}</div>
         <script src="script.js"></script>
       </body>
     </html>
   `)
 })
 
-server.listen(Port, () => {
-  console.log('Server is running on port 3000')
+const httpServer = server.listen(port, () => {
+  console.log('Server is running on port ' + port)
 })
