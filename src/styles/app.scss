@@ -21,7 +21,7 @@ body {
 
       .display {
         grid-column: span 4;
-        font-size: 65px;
+        font-size: 90px;
         text-align: right;
         font-weight: 400;
         padding-right: 20px;
@@ -31,27 +31,23 @@ body {
         font-family: 'Times New Roman';
 
         &.display-small {
-          font-size: 60px;
+          font-size: 85px;
         }
 
         &.display-smaller {
-          font-size: 55px;
+          font-size: 80px;
         }
 
         &.display-tiny {
-          font-size: 53px;
+          font-size: 76px;
         }
 
         &.display-minimal {
-          font-size: 50px;
+          font-size: 72px;
         }
 
         &.display-min {
-          font-size: 47px;
-        }
-
-        &.display-miner {
-          font-size: 42px;
+          font-size: 70px;
         }
       }
       button {
@@ -65,19 +61,34 @@ body {
         transition: background-color 0.3s;
         padding: 0;
         font-family: 'inter';
+        user-select: none;
+        -webkit-user-select: none; 
+        -moz-user-select: none;
+        -ms-user-select: none; 
+        &:active {
+          background-color: white;
+          color: #827d7d;
+        }
         &.operator-button {
           background-color: orange;
           &:focus {
-            background-color: white;
-            color: orange;
-          } 
-          &:active {
             background-color: white;
             color: orange;
           }
         }
         &.special-button {
           background-color: #6e6363;
+          &:active {
+            background-color: white;
+            color: #6e6363;
+          }
+        }
+        &.equal-button {
+          background-color: orange;
+          &:active {
+            background-color: white;
+            color: orange;
+          }
         }
       }
     }
