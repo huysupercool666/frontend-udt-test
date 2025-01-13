@@ -1,6 +1,6 @@
 import { hydrateRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import AppCalculator from './AppCalculator'
+import AppCalculator from './appCalculator/AppCalculator'
 import '../styles/app.scss'
 const domNode = document.getElementById('root')
 

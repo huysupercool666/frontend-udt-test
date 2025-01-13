@@ -1,15 +1,17 @@
 import React, { useReducer, useState } from 'react'
 
-type Action = { type: 'SET_INPUT'; value: string } | { type: 'CLEAR' }
+type Action = { type: 'SET_INPUT'; value: string } | { type: 'CLEAR' } | { type: 'SET_HISTORY'; value: string }
 
 interface State {
   input: string
   inputClassName: string
+  storeMultiOperator: string[]
 }
 
 const initialState: State = {
   input: '0',
-  inputClassName: 'display'
+  inputClassName: 'display',
+  storeMultiOperator: []
 }
 
 const OPERATORS = ['+', '-', '×', '÷']
@@ -24,7 +26,14 @@ function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'SET_INPUT': {
       let currentValue = action.value.replace(/,/g, '')
-      if (currentValue.length > MAX_INPUT_LENGTH) return state
+      if (currentValue.includes('e')) {
+        return { ...state, input: currentValue, inputClassName: 'display display-small' }
+      }
+
+      const valueWithoutSign = currentValue.replace(/^-/, '')
+      if (valueWithoutSign.length > MAX_INPUT_LENGTH) {
+        return state
+      }
 
       const lengthToClassName: Record<number, string> = {
         6: 'display display-small',
@@ -33,7 +42,6 @@ function reducer(state: State, action: Action): State {
         9: 'display display-minimal',
         10: 'display display-min'
       }
-
       const newInputClassName = lengthToClassName[currentValue.length] || 'display'
       const formattedInput = formatInput(currentValue)
       return { ...state, input: formattedInput, inputClassName: newInputClassName }
@@ -51,7 +59,7 @@ const App: React.FC = () => {
   const [nextValue, setNextValue] = useState<number>(0)
   const [operator, setOperator] = useState<string>('')
   const [lastOperation, setLastOperation] = useState<boolean>(false)
-
+  const [history, setHistory] = useState<string[]>([])
   const buttonValues = [
     'AC',
     '+/-',
@@ -78,16 +86,19 @@ const App: React.FC = () => {
     if (value === 0) {
       return '0'
     }
+    if (Math.abs(value) >= 1e9 || Math.abs(value) <= 1e-9) {
+      return value.toExponential(2)
+    }
     const parts = value.toString().split('.')
     if (parts[1] && parts[1].length > MAX_DECIMAL_PLACES) {
-      return value.toExponential(0)
-    } else if (Math.abs(value) < 1e-10 || Math.abs(value) > 1e10) {
-      return value.toExponential(0)
+      return value.toFixed(MAX_DECIMAL_PLACES)
     }
+
     return value.toString()
   }
 
   function handleSpecialButton(value: string) {
+    let currentValue = parseFloat(state.input.replace(/,/g, ''))
     try {
       switch (value) {
         case 'AC':
@@ -98,22 +109,17 @@ const App: React.FC = () => {
           setLastOperation(false)
           break
         case '+/-':
-          const currentValue = parseFloat(state.input.replace(/,/g, ''))
-          dispatch({ type: 'SET_INPUT', value: (-currentValue).toString() })
+          const newValueNegative = (currentValue * -1).toString()
+          const valueWithoutSignNegative = newValueNegative.replace(/^-/, '')
+          if (valueWithoutSignNegative.length <= MAX_INPUT_LENGTH) {
+            dispatch({ type: 'SET_INPUT', value: newValueNegative })
+          }
           break
         case '%':
-          const numValue = parseFloat(state.input.replace(/,/g, ''))
-          const percentValue = numValue / 100
-          dispatch({ type: 'SET_INPUT', value: checkDecimalToLong(percentValue) })
-          break
-        case ',':
-          if (!state.input.includes('.')) {
-            try {
-              const decimalValue = eval(state.input + '.0')
-              dispatch({ type: 'SET_INPUT', value: state.input + '.' })
-            } catch (error) {
-              dispatch({ type: 'SET_INPUT', value: 'Error' })
-            }
+          const newValuePercent = (currentValue / 100).toString()
+          const valueWithoutSignPercent = newValuePercent.replace(/^-/, '')
+          if (valueWithoutSignPercent.length <= MAX_INPUT_LENGTH) {
+            dispatch({ type: 'SET_INPUT', value: newValuePercent })
           }
           break
       }
@@ -125,10 +131,11 @@ const App: React.FC = () => {
   function handleOperatorButton(operator: string, prevValue: number, nextValue: number): string {
     try {
       let result: number
-
       switch (operator) {
         case '÷':
-          if (nextValue === 0) return 'Error'
+          if (nextValue === 0) {
+            return 'Error'
+          }
           result = prevValue / nextValue
           break
         case '×':
@@ -146,7 +153,6 @@ const App: React.FC = () => {
 
       return checkDecimalToLong(result)
     } catch (error) {
-      console.error('Error in handleOperatorButton:', error)
       return 'Error'
     }
   }
@@ -157,15 +163,17 @@ const App: React.FC = () => {
       if (OPERATORS.includes(value)) {
         setOperator(value)
         setPrevValue(currentValue)
-        setNextValue(currentValue)
-        dispatch({ type: 'SET_INPUT', value: '0' })
-        setLastOperation(false)
+        setLastOperation(true)
         return
       }
+
       if (value !== '=') {
-        if (lastOperation) {
+        if (operator && lastOperation) {
           dispatch({ type: 'SET_INPUT', value: value })
           setLastOperation(false)
+        } else if (operator && !lastOperation) {
+          const newInput = state.input.replace(/,/g, '') + value
+          dispatch({ type: 'SET_INPUT', value: newInput })
         } else if (state.input === '0') {
           dispatch({ type: 'SET_INPUT', value: value })
         } else {
@@ -173,32 +181,23 @@ const App: React.FC = () => {
           dispatch({ type: 'SET_INPUT', value: newInput })
         }
       }
+
       if (value === '=') {
         if (!operator) {
           dispatch({ type: 'SET_INPUT', value: currentValue.toString() })
-          setLastOperation(true)
           return
         }
-
-        const result = lastOperation
-          ? handleOperatorButton(operator, currentValue, nextValue)
-          : handleOperatorButton(operator, prevValue, currentValue)
-
-        if (!lastOperation) {
-          setNextValue(currentValue)
-        }
-
+        const result = handleOperatorButton(operator, prevValue, currentValue)
         if (result === 'Error') {
           dispatch({ type: 'SET_INPUT', value: 'Error' })
         } else {
           dispatch({ type: 'SET_INPUT', value: result })
+          setPrevValue(parseFloat(result))
+          setLastOperation(true)
         }
-
-        setLastOperation(true)
         return
       }
     } catch (error) {
-      console.error('Error in handleDisplay:', error)
       dispatch({ type: 'SET_INPUT', value: 'Error' })
     }
   }
@@ -220,6 +219,8 @@ const App: React.FC = () => {
         onClick={() => {
           if (isSpecial) {
             handleSpecialButton(button)
+          } else if (button === ',' || button === '.') {
+            handleDisplay(button ? '.' : '')
           } else {
             handleDisplay(button)
           }

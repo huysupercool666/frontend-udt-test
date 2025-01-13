@@ -1,7 +1,7 @@
 import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
-import AppCalculator from '../client/AppCalculator'
+import AppCalculator from '../client/appCalculator/AppCalculator'
 import { Server } from 'http'
 
 const server = express()
