@@ -62,9 +62,9 @@ body {
         padding: 0;
         font-family: 'inter';
         user-select: none;
-        -webkit-user-select: none; 
+        -webkit-user-select: none;
         -moz-user-select: none;
-        -ms-user-select: none; 
+        -ms-user-select: none;
         &:active {
           background-color: white;
           color: #827d7d;
@@ -96,4 +96,19 @@ body {
 }
 .double-width {
   grid-column: span 2;
+}
+
+.view-history-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.view-history-btn:hover {
+  background-color: #45a049;
 }

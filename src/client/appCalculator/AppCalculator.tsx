@@ -1,5 +1,4 @@
-import React, { useReducer, useState } from 'react'
-
+import React, { useReducer, useState, useRef, useEffect } from 'react'
 type Action = { type: 'SET_INPUT'; value: string } | { type: 'CLEAR' } | { type: 'SET_HISTORY'; value: string }
 
 interface State {
@@ -19,7 +18,9 @@ const MAX_INPUT_LENGTH = 9
 const MAX_DECIMAL_PLACES = 10
 
 function formatInput(input: string): string {
-  return input.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  const [integerPart, decimalPart] = input.split('.')
+  const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+  return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger
 }
 
 function reducer(state: State, action: Action): State {
@@ -82,13 +83,20 @@ const App: React.FC = () => {
     '='
   ]
 
-  function checkDecimalToLong(value: number): string {
-    if (value === 0) {
-      return '0'
+  function viewHistory() {}
+
+  function formatDecimalNumber(value: number): string {
+    if (value === 0) return '0'
+
+    if (Math.abs(value) >= 1e9 || Math.abs(value) < 1e-9) {
+      return value.toExponential(1)
     }
-    if (Math.abs(value) >= 1e9 || Math.abs(value) <= 1e-9) {
-      return value.toExponential(2)
+
+    if (Math.abs(value) < 1) {
+      const fixedNum = value.toFixed(MAX_DECIMAL_PLACES)
+      return parseFloat(fixedNum).toString()
     }
+
     const parts = value.toString().split('.')
     if (parts[1] && parts[1].length > MAX_DECIMAL_PLACES) {
       return value.toFixed(MAX_DECIMAL_PLACES)
@@ -116,11 +124,9 @@ const App: React.FC = () => {
           }
           break
         case '%':
-          const newValuePercent = (currentValue / 100).toString()
-          const valueWithoutSignPercent = newValuePercent.replace(/^-/, '')
-          if (valueWithoutSignPercent.length <= MAX_INPUT_LENGTH) {
-            dispatch({ type: 'SET_INPUT', value: newValuePercent })
-          }
+          const percentValue = currentValue / 100
+          const newValuePercent = formatDecimalNumber(percentValue)
+          dispatch({ type: 'SET_INPUT', value: newValuePercent })
           break
       }
     } catch (error) {
@@ -151,7 +157,7 @@ const App: React.FC = () => {
           return nextValue.toString()
       }
 
-      return checkDecimalToLong(result)
+      return formatDecimalNumber(result)
     } catch (error) {
       return 'Error'
     }
@@ -159,11 +165,25 @@ const App: React.FC = () => {
 
   function handleDisplay(value: string) {
     try {
-      const currentValue = parseFloat(state.input.replace(/,/g, ''))
+      const currentInput = state.input.replace(/,/g, '')
+
       if (OPERATORS.includes(value)) {
         setOperator(value)
-        setPrevValue(currentValue)
+        setPrevValue(parseFloat(currentInput))
         setLastOperation(true)
+        return
+      }
+
+      if (value === '.') {
+        if (currentInput.includes('.')) {
+          return
+        }
+        if (lastOperation) {
+          dispatch({ type: 'SET_INPUT', value: '0.' })
+          setLastOperation(false)
+          return
+        }
+        dispatch({ type: 'SET_INPUT', value: currentInput + '.' })
         return
       }
 
@@ -172,22 +192,23 @@ const App: React.FC = () => {
           dispatch({ type: 'SET_INPUT', value: value })
           setLastOperation(false)
         } else if (operator && !lastOperation) {
-          const newInput = state.input.replace(/,/g, '') + value
+          const newInput = currentInput + value
           dispatch({ type: 'SET_INPUT', value: newInput })
-        } else if (state.input === '0') {
+        } else if (currentInput === '0' && value !== '.') {
           dispatch({ type: 'SET_INPUT', value: value })
         } else {
-          const newInput = state.input.replace(/,/g, '') + value
+          const newInput = currentInput + value
           dispatch({ type: 'SET_INPUT', value: newInput })
         }
       }
 
       if (value === '=') {
         if (!operator) {
-          dispatch({ type: 'SET_INPUT', value: currentValue.toString() })
+          dispatch({ type: 'SET_INPUT', value: currentInput })
           return
         }
-        const result = handleOperatorButton(operator, prevValue, currentValue)
+        const nextVal = parseFloat(currentInput)
+        const result = handleOperatorButton(operator, prevValue, nextVal)
         if (result === 'Error') {
           dispatch({ type: 'SET_INPUT', value: 'Error' })
         } else {
@@ -195,7 +216,6 @@ const App: React.FC = () => {
           setPrevValue(parseFloat(result))
           setLastOperation(true)
         }
-        return
       }
     } catch (error) {
       dispatch({ type: 'SET_INPUT', value: 'Error' })
@@ -240,6 +260,11 @@ const App: React.FC = () => {
           <input type='text' value={state.input} readOnly className={state.inputClassName} />
           {buttonValues.map((button, index) => renderButton(button, index))}
         </div>
+      </div>
+      <div className='header-actions'>
+        <button onClick={viewHistory} className='view-history-btn'>
+          View History
+        </button>
       </div>
     </div>
   )

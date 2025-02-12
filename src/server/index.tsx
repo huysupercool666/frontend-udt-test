@@ -2,10 +2,14 @@ import express from 'express'
 import React from 'react'
 import { renderToString } from 'react-dom/server'
 import AppCalculator from '../client/appCalculator/AppCalculator'
+import HistoryPage from '../client/appHistory/AppHistory'
 import { Server } from 'http'
+import path from 'path'
 
 const server = express()
-const port = 3001
+const calculatorPort = 3001
+const historyPort = 3000
+
 server.use(express.static('dist'))
 
 server.get('/', (request, response) => {
@@ -14,7 +18,7 @@ server.get('/', (request, response) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>My App</title>
+        <title>Calculator</title>
         <link rel="stylesheet" href="app.css">
       </head>
       <body>
@@ -25,6 +29,28 @@ server.get('/', (request, response) => {
   `)
 })
 
-const httpServer = server.listen(port, () => {
-  console.log('Server is running on port ' + port)
+// Route cho history
+server.get('/history', (request, response) => {
+  const historyHtmlString = renderToString(<HistoryPage />)
+  response.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Lịch Sử Phép Tính</title>
+        <link rel="stylesheet" href="app.css">
+      </head>
+      <body>
+        <div id="root">${historyHtmlString}</div>
+        <script src="script.js"></script>
+      </body>
+    </html>
+  `)
+})
+
+server.get('*', (req, res) => {
+  res.sendFile(path.resolve('dist/index.html'))
+})
+
+const httpServer = server.listen(calculatorPort, () => {
+  console.log('Calculator server is running on port ' + calculatorPort)
 })
