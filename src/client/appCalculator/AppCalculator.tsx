@@ -82,7 +82,6 @@ const App: React.FC = () => {
     ',',
     '='
   ]
-
   function viewHistory() {}
 
   function formatDecimalNumber(value: number): string {
@@ -101,8 +100,8 @@ const App: React.FC = () => {
     if (parts[1] && parts[1].length > MAX_DECIMAL_PLACES) {
       return value.toFixed(MAX_DECIMAL_PLACES)
     }
-
-    return value.toString()
+    const fixedValue = Number(value.toFixed(MAX_DECIMAL_PLACES))
+    return fixedValue.toString()
   }
 
   function handleSpecialButton(value: string) {
@@ -137,29 +136,34 @@ const App: React.FC = () => {
   function handleOperatorButton(operator: string, prevValue: number, nextValue: number): string {
     try {
       let result: number
+      const prev = Number(prevValue)
+      const next = Number(nextValue)
+
       switch (operator) {
         case '÷':
-          if (nextValue === 0) {
-            return 'Error'
-          }
-          result = prevValue / nextValue
+          if (next === 0) return 'Error'
+          result = prev / next
           break
         case '×':
-          result = prevValue * nextValue
+          result = prev * next
           break
         case '+':
-          result = prevValue + nextValue
+          result = prev + next
           break
         case '-':
-          result = prevValue - nextValue
+          result = prev - next
           break
         default:
           return nextValue.toString()
       }
 
-      return formatDecimalNumber(result)
+      const formattedResult = formatDecimalNumber(result)
+      setPrevValue(result)
+      setNextValue(next)
+
+      return formattedResult
     } catch (error) {
-      return 'Error'
+      return 'Operation went wrong!'
     }
   }
 
@@ -168,8 +172,21 @@ const App: React.FC = () => {
       const currentInput = state.input.replace(/,/g, '')
 
       if (OPERATORS.includes(value)) {
+        if (operator && !lastOperation) {
+          const nextVal = parseFloat(currentInput)
+          const result = handleOperatorButton(operator, prevValue, nextVal)
+          if (result === 'Error') {
+            dispatch({ type: 'SET_INPUT', value: 'Error' })
+            return
+          }
+          setPrevValue(parseFloat(result))
+          dispatch({ type: 'SET_INPUT', value: result })
+        } else {
+          setPrevValue(parseFloat(currentInput))
+        }
+
+        setNextValue(0)
         setOperator(value)
-        setPrevValue(parseFloat(currentInput))
         setLastOperation(true)
         return
       }
@@ -203,19 +220,27 @@ const App: React.FC = () => {
       }
 
       if (value === '=') {
-        if (!operator) {
-          dispatch({ type: 'SET_INPUT', value: currentInput })
-          return
+        if (!operator) return
+
+        const nextVal = parseFloat(state.input.replace(/,/g, ''))
+        if (!lastOperation) {
+          setNextValue(nextVal)
         }
-        const nextVal = parseFloat(currentInput)
-        const result = handleOperatorButton(operator, prevValue, nextVal)
+
+        const result = handleOperatorButton(operator, prevValue, nextValue || nextVal)
+
         if (result === 'Error') {
           dispatch({ type: 'SET_INPUT', value: 'Error' })
-        } else {
-          dispatch({ type: 'SET_INPUT', value: result })
-          setPrevValue(parseFloat(result))
-          setLastOperation(true)
+          setOperator('')
+          setPrevValue(0)
+          setNextValue(0)
+          setLastOperation(false)
+          return
         }
+
+        dispatch({ type: 'SET_INPUT', value: result })
+        setPrevValue(parseFloat(result))
+        setLastOperation(true)
       }
     } catch (error) {
       dispatch({ type: 'SET_INPUT', value: 'Error' })
@@ -232,7 +257,6 @@ const App: React.FC = () => {
       ${isSpecial ? 'special-button' : ''}
       ${isEqual ? 'equal-button' : ''}
     `
-
     return (
       <button
         key={index}
@@ -261,6 +285,7 @@ const App: React.FC = () => {
           {buttonValues.map((button, index) => renderButton(button, index))}
         </div>
       </div>
+      <br />
       <div className='header-actions'>
         <button onClick={viewHistory} className='view-history-btn'>
           View History

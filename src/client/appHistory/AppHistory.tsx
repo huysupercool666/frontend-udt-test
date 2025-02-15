@@ -1,27 +1,16 @@
-const HISTORY_KEY = 'calculatorHistory'
+import React from 'react'
 
-export function saveHistory(history: string[]) {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history))
-  } catch (error) {
-    console.error('Error', error)
-  }
+interface HistoryProps {
+  history: string[]
 }
 
-export function getHistory(): string[] {
-  try {
-    const savedHistory = localStorage.getItem(HISTORY_KEY)
-    return savedHistory ? JSON.parse(savedHistory) : []
-  } catch (error) {
-    console.error('Error', error)
-    return []
-  }
+const AppHistory: React.FC<HistoryProps> = ({ history }) => {
+  return (
+    <div>
+      <h1>Calculator History</h1>
+      <ul></ul>
+    </div>
+  )
 }
 
-export function clearHistory() {
-  try {
-    localStorage.removeItem(HISTORY_KEY)
-  } catch (error) {
-    console.error('Error', error)
-  }
-}
+export default AppHistory
