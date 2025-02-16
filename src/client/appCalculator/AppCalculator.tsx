@@ -82,7 +82,9 @@ const App: React.FC = () => {
     ',',
     '='
   ]
-  function viewHistory() {}
+  function viewHistory() {
+    window.location.href = '/HistoryPage'
+  }
 
   function formatDecimalNumber(value: number): string {
     if (value === 0) return '0'
@@ -160,6 +162,9 @@ const App: React.FC = () => {
       const formattedResult = formatDecimalNumber(result)
       setPrevValue(result)
       setNextValue(next)
+
+      const historyEntry = `${prev} ${operator} ${next} = ${formattedResult}`
+      setHistory((prevHistory) => [...prevHistory, historyEntry])
 
       return formattedResult
     } catch (error) {
@@ -275,6 +280,10 @@ const App: React.FC = () => {
       </button>
     )
   }
+
+  useEffect(() => {
+    localStorage.setItem('history', JSON.stringify(history))
+  }, [history])
 
   return (
     <div>

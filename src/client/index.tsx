@@ -1,7 +1,9 @@
 import { hydrateRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import AppCalculator from './appCalculator/AppCalculator'
+import HistoryPage from './historyPage/HistoryPage'
 import '../styles/app.scss'
+
 const domNode = document.getElementById('root')
 
 if (!domNode) {
@@ -11,6 +13,9 @@ if (!domNode) {
 hydrateRoot(
   domNode,
   <BrowserRouter>
-    <AppCalculator />
+    <Routes>
+      <Route path='/' element={<AppCalculator />} />
+      <Route path='/HistoryPage' element={<HistoryPage />} />
+    </Routes>
   </BrowserRouter>
 )
