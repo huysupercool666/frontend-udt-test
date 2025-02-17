@@ -87,6 +87,8 @@ const App: React.FC = () => {
     ',',
     '='
   ]
+  const [pendingOperations, setPendingOperations] = useState<string[]>([])
+
   function viewHistory() {
     window.location.href = '/history'
   }
@@ -122,7 +124,7 @@ const App: React.FC = () => {
     let currentValue = parseFloat(state.input.replace(/,/g, ''))
     try {
       switch (value) {
-        case 'AC':
+        case 'C':
           dispatch({ type: 'CLEAR' })
           setOperator('')
           setPrevValue(0)
@@ -190,6 +192,18 @@ const App: React.FC = () => {
 
       if (OPERATORS.includes(value)) {
         if (operator && !lastOperation) {
+          if (value === '+' || value === '-') {
+            if (['×', '÷'].includes(operator)) {
+              const nextVal = parseFloat(currentInput)
+              const result = handleOperatorButton(operator, prevValue, nextVal)
+              if (result === 'Error') {
+                dispatch({ type: 'SET_INPUT', value: 'Error' })
+                return
+              }
+              setPrevValue(parseFloat(result))
+              dispatch({ type: 'SET_INPUT', value: result })
+            }
+          }
           const nextVal = parseFloat(currentInput)
           const result = handleOperatorButton(operator, prevValue, nextVal)
           if (result === 'Error') {
@@ -237,27 +251,47 @@ const App: React.FC = () => {
       }
 
       if (value === '=') {
-        if (!operator) return
+        const currentNumber = parseFloat(currentInput)
 
-        const nextVal = parseFloat(state.input.replace(/,/g, ''))
-        if (!lastOperation) {
-          setNextValue(nextVal)
+        if (!operator) {
+          const historyEntry = `${currentNumber} = ${currentNumber}`
+          setHistory((prevHistory) => [...prevHistory, historyEntry])
+          return
         }
 
-        const result = handleOperatorButton(operator, prevValue, nextValue || nextVal)
+        let finalResult: number | string = currentNumber
 
-        if (result === 'Error') {
+        if (pendingOperations.length > 0) {
+          const result = handleOperatorButton(operator, prevValue, currentNumber)
+          if (result === 'Error') {
+            finalResult = 'Error'
+          } else {
+            finalResult = parseFloat(result)
+          }
+        } else {
+          const result = handleOperatorButton(operator, prevValue, currentNumber)
+          if (result === 'Error') {
+            finalResult = 'Error'
+          } else {
+            finalResult = parseFloat(result)
+          }
+        }
+
+        if (finalResult === 'Error') {
           dispatch({ type: 'SET_INPUT', value: 'Error' })
           setOperator('')
           setPrevValue(0)
           setNextValue(0)
           setLastOperation(false)
+          setPendingOperations([])
           return
         }
 
-        dispatch({ type: 'SET_INPUT', value: result })
-        setPrevValue(parseFloat(result))
+        dispatch({ type: 'SET_INPUT', value: finalResult.toString() })
+        setPrevValue(typeof finalResult === 'number' ? finalResult : 0)
         setLastOperation(true)
+        setPendingOperations([])
+        return
       }
     } catch (error) {
       dispatch({ type: 'SET_INPUT', value: 'Error' })
@@ -268,7 +302,7 @@ const App: React.FC = () => {
     e.stopPropagation()
     setIsEditing(true)
     if (state.input === '0') {
-      dispatch({ type: 'SET_INPUT', value: '' }) 
+      dispatch({ type: 'SET_INPUT', value: '' })
     }
   }
 
@@ -304,6 +338,7 @@ const App: React.FC = () => {
     const isOperator = ['÷', '×', '-', '+'].includes(button)
     const isSpecial = ['AC', '+/-', '%'].includes(button)
     const isEqual = ['='].includes(button)
+    const buttonText = button === 'AC' ? (state.input === '0' ? 'AC' : 'C') : button
     const buttonClassName = `
       ${button === '0' ? 'double-width' : ''}
       ${isOperator ? 'operator-button' : ''}
@@ -315,7 +350,7 @@ const App: React.FC = () => {
         key={index}
         onClick={() => {
           if (isSpecial) {
-            handleSpecialButton(button)
+            handleSpecialButton(buttonText)
           } else if (button === ',' || button === '.') {
             handleDisplay(button ? '.' : '')
           } else {
@@ -324,7 +359,7 @@ const App: React.FC = () => {
         }}
         className={buttonClassName}
       >
-        {button}
+        {buttonText}
       </button>
     )
   }
