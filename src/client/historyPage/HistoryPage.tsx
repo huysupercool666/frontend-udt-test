@@ -142,10 +142,10 @@ const HistoryPage: React.FC = () => {
         `}
       </style>
       <div className='history-page'>
-        <h1>Lịch Sử Tính Toán</h1>
+        <h1>History calculator</h1>
         <div className='history-list'>
           {history.length === 0 ? (
-            <p>Không có lịch sử tính toán</p>
+            <p>There is currently no calculation available</p>
           ) : (
             <ul>
               {history.map((entry, index) => (
@@ -154,7 +154,7 @@ const HistoryPage: React.FC = () => {
             </ul>
           )}
         </div>
-        <button onClick={() => (window.location.href = 'http://localhost:3001')}>Quay lại máy tính</button>
+        <button onClick={() => (window.location.href = '/')}>Back to calculator</button>
       </div>
     </>
   )

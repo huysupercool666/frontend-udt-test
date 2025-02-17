@@ -15,7 +15,7 @@ hydrateRoot(
   <BrowserRouter>
     <Routes>
       <Route path='/' element={<AppCalculator />} />
-      <Route path='/HistoryPage' element={<HistoryPage />} />
+      <Route path='/history' element={<HistoryPage />} />
     </Routes>
   </BrowserRouter>
 )

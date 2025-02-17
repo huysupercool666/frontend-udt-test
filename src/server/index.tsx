@@ -7,7 +7,7 @@ import { Server } from 'http'
 import path from 'path'
 
 const server = express()
-const calculatorPort = 3001
+const calculatorPort = 3000
 
 server.use(express.static('dist'))
 
@@ -32,7 +32,7 @@ const httpServer = server.listen(calculatorPort, () => {
   console.log('Calculator server is running on port ' + calculatorPort)
 })
 
-server.get('/HistoryPage', (request, response) => {
+server.get('/history', (request, response) => {
   const historyHtmlString = renderToString(<HistoryPage />)
   response.send(`
     <!DOCTYPE html>
@@ -49,6 +49,6 @@ server.get('/HistoryPage', (request, response) => {
   `)
 })
 
-server.get('/3000', (request, response) => {
+server.get('/history', (request, response) => {
   response.sendFile(path.join(__dirname, '../../dist/index.html'))
 })

@@ -49,6 +49,20 @@ body {
         &.display-min {
           font-size: 70px;
         }
+        &.editing {
+          cursor: text;
+          animation: blink 1s infinite;
+          border: 2px solid #4caf50;
+          outline: none;
+        }
+
+        input[type='text'].display.editing::placeholder {
+          color: #999;
+        }
+
+        input[type='text'].display:focus {
+          outline: none;
+        }
       }
       button {
         height: 98px;

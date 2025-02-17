@@ -18,9 +18,12 @@ const MAX_INPUT_LENGTH = 9
 const MAX_DECIMAL_PLACES = 10
 
 function formatInput(input: string): string {
-  const [integerPart, decimalPart] = input.split('.')
+  const isNegative = input.startsWith('-')
+  const numberWithoutSign = isNegative ? input.slice(1) : input
+  const [integerPart, decimalPart] = numberWithoutSign.split('.')
   const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-  return decimalPart !== undefined ? `${formattedInteger}.${decimalPart}` : formattedInteger
+  const finalInteger = isNegative ? `-${formattedInteger}` : formattedInteger
+  return decimalPart !== undefined ? `${finalInteger}.${decimalPart}` : finalInteger
 }
 
 function reducer(state: State, action: Action): State {
@@ -61,6 +64,8 @@ const App: React.FC = () => {
   const [operator, setOperator] = useState<string>('')
   const [lastOperation, setLastOperation] = useState<boolean>(false)
   const [history, setHistory] = useState<string[]>([])
+  const [isEditing, setIsEditing] = useState<boolean>(false)
+  const inputRef = useRef<HTMLInputElement>(null)
   const buttonValues = [
     'AC',
     '+/-',
@@ -83,7 +88,7 @@ const App: React.FC = () => {
     '='
   ]
   function viewHistory() {
-    window.location.href = '/HistoryPage'
+    window.location.href = '/history'
   }
 
   function formatDecimalNumber(value: number): string {
@@ -93,17 +98,24 @@ const App: React.FC = () => {
       return value.toExponential(1)
     }
 
-    if (Math.abs(value) < 1) {
-      const fixedNum = value.toFixed(MAX_DECIMAL_PLACES)
-      return parseFloat(fixedNum).toString()
+    const stringValue = value.toString()
+    const [integerPart, decimalPart] = stringValue.split('.')
+
+    if (integerPart.length > MAX_INPUT_LENGTH) {
+      return value.toExponential(1)
     }
 
-    const parts = value.toString().split('.')
-    if (parts[1] && parts[1].length > MAX_DECIMAL_PLACES) {
-      return value.toFixed(MAX_DECIMAL_PLACES)
+    if (!decimalPart) {
+      return stringValue
     }
-    const fixedValue = Number(value.toFixed(MAX_DECIMAL_PLACES))
-    return fixedValue.toString()
+
+    const maxDecimalPlaces = MAX_INPUT_LENGTH - integerPart.length - 1
+    if (maxDecimalPlaces <= 0) {
+      return integerPart
+    }
+
+    const roundedValue = Number(value.toFixed(Math.min(maxDecimalPlaces, MAX_DECIMAL_PLACES)))
+    return roundedValue.toString()
   }
 
   function handleSpecialButton(value: string) {
@@ -252,6 +264,42 @@ const App: React.FC = () => {
     }
   }
 
+  function handleDisplayClick(e: React.MouseEvent) {
+    e.stopPropagation()
+    setIsEditing(true)
+    if (state.input === '0') {
+      dispatch({ type: 'SET_INPUT', value: '' }) 
+    }
+  }
+
+  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value.replace(/[^\d.-]/g, '')
+    if (value.length <= MAX_INPUT_LENGTH) {
+      dispatch({ type: 'SET_INPUT', value })
+    }
+  }
+
+  function handleClickOutside() {
+    setIsEditing(false)
+  }
+
+  useEffect(() => {
+    localStorage.setItem('history', JSON.stringify(history))
+  }, [history])
+
+  useEffect(() => {
+    document.addEventListener('click', handleClickOutside)
+    return () => {
+      document.removeEventListener('click', handleClickOutside)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isEditing])
+
   function renderButton(button: string, index: number) {
     const isOperator = ['÷', '×', '-', '+'].includes(button)
     const isSpecial = ['AC', '+/-', '%'].includes(button)
@@ -281,16 +329,20 @@ const App: React.FC = () => {
     )
   }
 
-  useEffect(() => {
-    localStorage.setItem('history', JSON.stringify(history))
-  }, [history])
-
   return (
     <div>
       <h1>Calculator</h1>
       <div className='wrapper'>
         <div className='board'>
-          <input type='text' value={state.input} readOnly className={state.inputClassName} />
+          <input
+            ref={inputRef}
+            type='text'
+            value={state.input}
+            className={`${state.inputClassName} ${isEditing ? 'editing' : ''}`}
+            onClick={handleDisplayClick}
+            onChange={handleInputChange}
+            readOnly={!isEditing}
+          />
           {buttonValues.map((button, index) => renderButton(button, index))}
         </div>
       </div>
