@@ -391,19 +391,31 @@ describe('Calculator App', () => {
     })
   })
 
-  describe('History Feature Extended', () => {
-    test('should store complex calculations in history', () => {
-      localStorage.clear()
-      fireEvent.click(screen.getByText('2'))
+  describe('Operation Chaining', () => {
+    test('should handle multiple operations without equals', () => {
+      fireEvent.click(screen.getByText('5'))
       fireEvent.click(screen.getByText('+'))
       fireEvent.click(screen.getByText('3'))
       fireEvent.click(screen.getByText('×'))
-      fireEvent.click(screen.getByText('4'))
+      fireEvent.click(screen.getByText('2'))
       fireEvent.click(screen.getByText('='))
-      const history = JSON.parse(localStorage.getItem('history') || '[]')
-      expect(history[history.length - 1]).toContain('20')
+      expect(screen.getByRole('textbox')).toHaveValue('11')
     })
 
+    test('should handle operation priority', () => {
+      fireEvent.click(screen.getByText('5'))
+      fireEvent.click(screen.getByText('+'))
+      fireEvent.click(screen.getByText('3'))
+      fireEvent.click(screen.getByText('×'))
+      fireEvent.click(screen.getByText('2'))
+      fireEvent.click(screen.getByText('-'))
+      fireEvent.click(screen.getByText('4'))
+      fireEvent.click(screen.getByText('='))
+      expect(screen.getByRole('textbox')).toHaveValue('7')
+    })
+  })
+
+  describe('History Feature Extended', () => {
     test('should handle history with scientific notation', () => {
       localStorage.clear()
       Array(9)

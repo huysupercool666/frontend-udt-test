@@ -87,8 +87,9 @@ const App: React.FC = () => {
     ',',
     '='
   ]
-  const [pendingOperations, setPendingOperations] = useState<string[]>([])
+  const [pendingOperation, setPendingOperation] = useState<{ value: number; operator: string } | null>(null)
   const [lastNumber, setLastNumber] = useState<number>(0)
+  const [lastOperator, setLastOperator] = useState<string>('')
 
   function viewHistory() {
     window.location.href = '/history'
@@ -192,32 +193,55 @@ const App: React.FC = () => {
       const currentInput = state.input.replace(/,/g, '')
 
       if (OPERATORS.includes(value)) {
+        const currentNumber = Number(currentInput)
+
         if (operator && !lastOperation) {
-          if (value === '+' || value === '-') {
-            if (['×', '÷'].includes(operator)) {
-              const nextVal = parseFloat(currentInput)
-              const result = handleOperatorButton(operator, prevValue, nextVal)
+          if (['×', '÷'].includes(value)) {
+            if (!pendingOperation) {
+              setPendingOperation({ value: prevValue, operator: operator })
+              setPrevValue(currentNumber)
+            } else {
+              const result = handleOperatorButton(operator, prevValue, currentNumber)
               if (result === 'Error') {
                 dispatch({ type: 'SET_INPUT', value: 'Error' })
                 return
               }
-              setPrevValue(parseFloat(result))
+              setPrevValue(Number(result))
+              dispatch({ type: 'SET_INPUT', value: result })
+            }
+          } else {
+            const result = handleOperatorButton(operator, prevValue, currentNumber)
+            if (result === 'Error') {
+              dispatch({ type: 'SET_INPUT', value: 'Error' })
+              return
+            }
+
+            if (pendingOperation) {
+              const finalResult = handleOperatorButton(
+                pendingOperation.operator,
+                pendingOperation.value,
+                Number(result)
+              )
+              setPrevValue(Number(finalResult))
+              dispatch({ type: 'SET_INPUT', value: finalResult })
+              setPendingOperation(null)
+            } else {
+              setPrevValue(Number(result))
               dispatch({ type: 'SET_INPUT', value: result })
             }
           }
-          const nextVal = parseFloat(currentInput)
-          const result = handleOperatorButton(operator, prevValue, nextVal)
-          if (result === 'Error') {
-            dispatch({ type: 'SET_INPUT', value: 'Error' })
-            return
-          }
-          setPrevValue(parseFloat(result))
-          dispatch({ type: 'SET_INPUT', value: result })
         } else {
-          setPrevValue(parseFloat(currentInput))
+          if (pendingOperation && ['×', '÷'].includes(operator)) {
+            setPrevValue(currentNumber)
+          } else {
+            if (pendingOperation) {
+              setPrevValue(currentNumber)
+            } else {
+              setPrevValue(currentNumber)
+            }
+          }
         }
 
-        setNextValue(0)
         setOperator(value)
         setLastOperation(true)
         return
@@ -260,29 +284,33 @@ const App: React.FC = () => {
           return
         }
 
-        let finalResult: number | string = currentNumber
+        let finalResult: number | string
 
         if (lastOperation) {
           finalResult = handleOperatorButton(operator, Number(currentInput), lastNumber)
         } else {
+          let result = handleOperatorButton(operator, prevValue, currentNumber)
+          if (pendingOperation) {
+            result = handleOperatorButton(pendingOperation.operator, pendingOperation.value, Number(result))
+          }
           setLastNumber(currentNumber)
-          finalResult = handleOperatorButton(operator, prevValue, currentNumber)
+          finalResult = result
         }
 
         if (finalResult === 'Error') {
           dispatch({ type: 'SET_INPUT', value: 'Error' })
           setOperator('')
           setPrevValue(0)
-          setNextValue(0)
+          setLastNumber(0)
           setLastOperation(false)
-          setPendingOperations([])
+          setPendingOperation(null)
           return
         }
 
         dispatch({ type: 'SET_INPUT', value: finalResult.toString() })
         setPrevValue(Number(finalResult))
         setLastOperation(true)
-        setPendingOperations([])
+        setPendingOperation(null)
         return
       }
     } catch (error) {
