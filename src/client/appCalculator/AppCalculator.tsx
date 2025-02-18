@@ -88,6 +88,7 @@ const App: React.FC = () => {
     '='
   ]
   const [pendingOperations, setPendingOperations] = useState<string[]>([])
+  const [lastNumber, setLastNumber] = useState<number>(0)
 
   function viewHistory() {
     window.location.href = '/history'
@@ -251,7 +252,7 @@ const App: React.FC = () => {
       }
 
       if (value === '=') {
-        const currentNumber = parseFloat(currentInput)
+        const currentNumber = Number(currentInput)
 
         if (!operator) {
           const historyEntry = `${currentNumber} = ${currentNumber}`
@@ -261,20 +262,11 @@ const App: React.FC = () => {
 
         let finalResult: number | string = currentNumber
 
-        if (pendingOperations.length > 0) {
-          const result = handleOperatorButton(operator, prevValue, currentNumber)
-          if (result === 'Error') {
-            finalResult = 'Error'
-          } else {
-            finalResult = parseFloat(result)
-          }
+        if (lastOperation) {
+          finalResult = handleOperatorButton(operator, Number(currentInput), lastNumber)
         } else {
-          const result = handleOperatorButton(operator, prevValue, currentNumber)
-          if (result === 'Error') {
-            finalResult = 'Error'
-          } else {
-            finalResult = parseFloat(result)
-          }
+          setLastNumber(currentNumber)
+          finalResult = handleOperatorButton(operator, prevValue, currentNumber)
         }
 
         if (finalResult === 'Error') {
@@ -288,7 +280,7 @@ const App: React.FC = () => {
         }
 
         dispatch({ type: 'SET_INPUT', value: finalResult.toString() })
-        setPrevValue(typeof finalResult === 'number' ? finalResult : 0)
+        setPrevValue(Number(finalResult))
         setLastOperation(true)
         setPendingOperations([])
         return
@@ -369,6 +361,11 @@ const App: React.FC = () => {
       <h1>Calculator</h1>
       <div className='wrapper'>
         <div className='board'>
+          <div className='mac-control-buttons'>
+            <div className='control-button close'></div>
+            <div className='control-button minimize'></div>
+            <div className='control-button maximize'></div>
+          </div>
           <input
             ref={inputRef}
             type='text'

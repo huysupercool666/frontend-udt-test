@@ -13,22 +13,76 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     width: 468px;
+    border: 1.9px solid #3d3535;
+
+    .mac-control-buttons {
+      display: flex;
+      background-color: #5a5050;
+      margin: 0;
+      align-items: center;
+      gap: 12px;
+      padding-top: 12px;
+      padding-left: 15px;
+    }
+
+    .control-button {
+      width: 25px;
+      height: 25px;
+      border-radius: 100%;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+
+    .close {
+      background-color: #ff5f56;
+      &:hover {
+        background-color: #ff4343;
+      }
+    }
+
+    .minimize {
+      background-color: #ffbd2e;
+      &:hover {
+        background-color: #ffb01b;
+      }
+    }
+
+    .maximize {
+      background-color: #27c93f;
+      &:hover {
+        background-color: #23b939;
+      }
+    }
 
     .board {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1px;
+      grid-template-columns: repeat(4, 117px);
+      margin: 0;
+      padding: 10;
+      gap: 2px;
 
       .display {
-        grid-column: span 4;
+        grid-column: 1 / -1;
         font-size: 90px;
+        letter-spacing: -2px;
         text-align: right;
-        font-weight: 400;
+        font-weight: 300;
         padding-right: 20px;
         background-color: #5a5050;
         color: white;
-        height: 130px;
-        font-family: 'Times New Roman';
+        height: 78px;
+        font-family: 'Inter', sans-serif;
+        border: none;
+        margin: 0;
+        padding-top: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
 
         &.display-small {
           font-size: 85px;
@@ -51,8 +105,6 @@ body {
         }
         &.editing {
           cursor: text;
-          animation: blink 1s infinite;
-          border: 2px solid #4caf50;
           outline: none;
         }
 
@@ -64,7 +116,12 @@ body {
           outline: none;
         }
       }
+
       button {
+        font-family: 'Inter', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         height: 98px;
         font-size: 40px;
         font-weight: 400;
@@ -74,7 +131,6 @@ body {
         color: white;
         transition: background-color 0.3s;
         padding: 0;
-        font-family: 'inter';
         user-select: none;
         -webkit-user-select: none;
         -moz-user-select: none;
@@ -83,8 +139,10 @@ body {
           background-color: white;
           color: #827d7d;
         }
+
         &.operator-button {
           background-color: orange;
+          font-size: 55px;
           &:focus {
             background-color: white;
             color: orange;
@@ -92,6 +150,7 @@ body {
         }
         &.special-button {
           background-color: #6e6363;
+          font-size: 35px;
           &:active {
             background-color: white;
             color: #6e6363;
@@ -99,6 +158,7 @@ body {
         }
         &.equal-button {
           background-color: orange;
+          font-size: 50px;
           &:active {
             background-color: white;
             color: orange;
@@ -125,5 +185,5 @@ body {
 
 .view-history-btn:hover {
   background-color: #45a049;
-  //cursor: pointer;
+  cursor: pointer;
 }
