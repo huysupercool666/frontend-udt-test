@@ -106,7 +106,7 @@ const App: React.FC = () => {
     const [integerPart, decimalPart] = stringValue.split('.')
 
     if (integerPart.length > MAX_INPUT_LENGTH) {
-      return value.toExponential(1)
+      return value.toExponential(10)
     }
 
     if (!decimalPart) {
